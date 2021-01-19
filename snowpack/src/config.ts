@@ -648,7 +648,10 @@ function resolveRelativeConfig(config: SnowpackUserConfig, configBase: string): 
   if (config.plugins) {
     config.plugins = config.plugins.map((plugin) => {
       const name = Array.isArray(plugin) ? plugin[0] : plugin;
-      const absName = path.isAbsolute(name) ? name : require.resolve(name, {paths: [configBase]});
+      // patch: resolve plugin name in the config directory first, then in global paths
+      const _resolvePaths = require.resolve.paths(name) as string[];
+      _resolvePaths.unshift(configBase);
+      const absName = path.isAbsolute(name) ? name : require.resolve(name, {paths: _resolvePaths});
       if (Array.isArray(plugin)) {
         plugin.splice(0, 1, absName);
         return plugin;
